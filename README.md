@@ -9,7 +9,7 @@
 - 網站：[島嶼鐵道學校](https://mars-tw.github.io/taiwan-train-school/)
 - 原始碼：[mars-tw/taiwan-train-school](https://github.com/mars-tw/taiwan-train-school)
 
-上面是專案的公開目標位置；實際部署狀態請看 GitHub Actions。手機可用 Safari 或 Chrome 開啟網站，加入主畫面；首次完整載入後，PWA 會快取模型及圖片，再次使用可離線開啟。
+網站已透過 GitHub Pages 公開，電腦不需要保持開機。手機可用 Safari 或 Chrome 開啟網站，加入主畫面；首次完整載入後，PWA 會快取模型及圖片，再次使用可離線開啟。公開首頁、模型與完整原始碼 ZIP 均已讀回 HTTP 200，390×844 手機尺寸與離線重新載入也已驗證。
 
 ![幼兒操作畫面](docs/game-mobile.png)
 

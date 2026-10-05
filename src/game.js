@@ -22,9 +22,9 @@ export class TrainGame{
     if(Math.abs(d)<8&&v<.15){this.controls.throttle=0;this.controls.brake=7;if(!red)this.stopAssist=false;return;}
     const wantedDirection=d<0?-1:1;
     if(this.controls.direction!==wantedDirection){this.controls.throttle=0;this.controls.brake=7;if(v>=.15)return;this.controls.direction=wantedDirection;}
-    const target=Math.min(this.limit()/3.6-.9,Math.sqrt(Math.max(0,Math.abs(d)-3)*.55),Math.abs(d)<25?1.9:12);
+    const target=Math.min(this.limit()/3.6-.9,Math.sqrt(Math.max(0,Math.abs(d)-3)*.55),Math.abs(d)<25?1.9:12,wantedDirection<0?2:12);
     if(v>target+.3||Math.abs(d)<5){this.controls.throttle=0;this.controls.brake=Math.abs(d)<5?7:clamp(Math.ceil((v-target)*1.8+2),2,7);}
-    else if(v<target-.35){this.controls.brake=0;this.controls.throttle=Math.abs(d)<25?1:3;}
+    else if(v<target-.35){this.controls.brake=0;this.controls.throttle=Math.abs(d)<25||wantedDirection<0?1:3;}
     else{this.controls.throttle=0;this.controls.brake=0;}
   }
   childHint(){const s=this.getState(),c=s.controls;if(c.emergency)return {text:'火車停穩了，再按「解除」。',action:'child-emergency'};if(!c.power)return {text:'按綠色按鈕，準備出發！',action:'child-prepare'};if(this.serviced)return {text:'乘客上車了！關門，準備出發。',action:'child-doors'};if(c.doors&&Math.abs(s.distance)<=12)return {text:'乘客正在上車，等一下喔。',action:''};if(c.doors)return {text:'先關好車門，準備出發。',action:'child-prepare'};if(s.signal==='red')return {text:Math.abs(s.speed)<.6&&s.signalDistance<70?'紅燈先等一等，綠燈再走。':'看到紅燈，先慢慢停！',action:Math.abs(s.speed)<.6&&s.signalDistance<70?'':'child-help-stop'};if(Math.abs(s.distance)<=12&&Math.abs(s.speed)<.6)return {text:'到站了！打開車門接乘客。',action:'child-doors'};if(this.stopAssist)return {text:'教練幫忙停好，留意前方車站。',action:''};if(s.distance<Math.max(100,s.stoppingDistance+50))return {text:'快到站了！按黃色「幫我停好」。',action:'child-help-stop'};if(Math.abs(s.speed)<.6)return {text:'按綠色按鈕，開始前進！',action:'child-go'};return {text:'火車出發了！看前面，慢慢開。',action:''};}
@@ -67,7 +67,10 @@ export class TrainGame{
       this.boarding+=step;if(this.boarding>=4){this.serviced=true;this.stops.push({station:this.route.stationNames[this.stopIndex],error:Math.abs(this.distanceToStop()),at:this.elapsed});this.notify('乘客上車了！按「關門確認」，完成本站。');}
     }
     this.hint=this.buildHint();
-    if(p.s>this.lesson.end+100){this.emergency();this.notify('已超過終點。停穩後選「後退」，用低速回到停車標。');}
+    // The boundary stops further forward travel while leaving a stationary train
+    // free to release protection and physically reverse back to the platform.
+    const requestsForward=c.direction===1&&c.throttle>0&&c.power&&!c.doors&&c.brake===0;
+    if(p.s>this.lesson.end+100&&!c.emergency&&(p.v>.02||requestsForward)){this.emergency();this.notify('已超過終點。停穩後選「後退」，用低速回到停車標。');}
   }
   buildHint(){
     const p=this.physics,c=this.controls,d=this.distanceToStop(),signal=this.nextSignal();

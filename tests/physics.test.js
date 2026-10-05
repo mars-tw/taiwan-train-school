@@ -14,3 +14,19 @@ test('red-signal overrun applies protection and can recover after a complete sto
 test('each lesson can complete all station service stages, and pause/reset preserve state correctly',()=>{for(const id of ['lesson1','lesson2','lesson3']){const g=new TrainGame();g.start(id);g.togglePower();g.toggleDoors();g.direction(1);g.signalCleared=true;for(const at of g.lesson.stops){g.physics.s=at+2;g.physics.v=0;g.controls.brake=7;g.controls.doors=false;g.toggleDoors();for(let i=0;i<250;i++)g.update(1/60);assert.equal(g.serviced,true);g.toggleDoors();}assert.equal(g.completed,true);assert.equal(g.stops.length,g.lesson.stops.length);assert.ok(g.score>90);g.reset();g.pause();g.update(1/60);assert.equal(g.elapsed,0);g.resume();g.update(1/60);assert.ok(g.elapsed>0);}});
 test('toddler stop assistance physically completes every lesson on every route without repositioning',()=>{for(const route of ['coast','city','forest'])for(const lesson of ['lesson1','lesson2','lesson3']){const g=new TrainGame();g.start(lesson,{route});g.prepare();g.helpStop();for(let i=0;i<60*350&&!g.completed;i++){const s=g.getState();if(s.signalCleared&&!s.stopAssist&&s.distance>12&&Math.abs(s.speed)<.55&&!s.controls.doors){g.childGo();g.helpStop();}if(Math.abs(s.distance)<12&&Math.abs(s.speed)<.5&&!s.controls.doors){g.brake(7);g.toggleDoors();}if(g.serviced){g.toggleDoors();if(!g.completed){g.prepare();g.helpStop();}}const before=g.physics.s;g.update(1/60);assert.ok(Math.abs(g.physics.s-before)<.3,'assistance must move continuously through physics');}assert.equal(g.completed,true,`${route}/${lesson} must be reachable`);assert.equal(g.infractions.length,0);assert.ok(g.stops.every(s=>s.error<=12));}});
 test('stop assistance first halts an overrun, reverses only when stationary and returns at low speed',()=>{const g=new TrainGame();g.prepare();g.physics.s=455;g.physics.v=3;g.helpStop();for(let i=0;i<9000;i++){g.update(1/60);if(Math.abs(g.distanceToStop())<12&&Math.abs(g.physics.v)<.15)break;}assert.ok(Math.abs(g.distanceToStop())<12);assert.ok(Math.abs(g.physics.v)<.15);});
+test('overrun beyond the course boundary can release protection and physically reverse to the stop',()=>{
+  const g=new TrainGame();g.prepare();g.physics.s=g.lesson.end+110;g.physics.v=6;g.physics.pressure=0;g.controls.throttle=2;
+  g.update(1/60);assert.equal(g.controls.emergency,true,'forward travel beyond the boundary must brake');
+  for(let i=0;i<1800&&g.physics.v!==0;i++)g.update(1/60);
+  assert.equal(g.physics.v,0);assert.ok(g.physics.s>g.lesson.end+100);
+  g.releaseEmergency();g.update(1/60);assert.equal(g.controls.emergency,false,'stationary protection must stay released');
+  g.helpStop();let reversed=false;
+  for(let i=0;i<60*350;i++){
+    const before=g.physics.s;g.update(1/60);assert.ok(Math.abs(g.physics.s-before)<.3,'recovery must use continuous physical motion');
+    if(g.physics.v<0){reversed=true;assert.equal(g.controls.direction,-1);assert.ok(Math.abs(g.physics.v)<3,'reverse recovery must remain slow');}
+    assert.equal(g.controls.emergency,false,'reverse recovery must not retrigger the forward boundary');
+    if(Math.abs(g.distanceToStop())<=12&&Math.abs(g.physics.v)<.15)break;
+  }
+  assert.equal(reversed,true);assert.ok(Math.abs(g.distanceToStop())<=12);assert.ok(Math.abs(g.physics.v)<.15);
+  const forward=new TrainGame();forward.prepare();forward.physics.s=forward.lesson.end+110;forward.throttle(1);forward.update(1/60);assert.equal(forward.controls.emergency,true,'new forward traction outside the course remains protected');
+});
