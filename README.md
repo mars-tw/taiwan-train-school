@@ -1,3 +1,11 @@
+# 已合併至島嶼交通學院
+
+此儲存庫保留為合併前的歷史來源。後續開發、模型與更新都在 [共同專案](https://github.com/mars-tw/taiwan-island-drive)。
+
+**[直接玩合併版](https://mars-tw.github.io/taiwan-island-drive/train/)** · [交通學院大廳](https://mars-tw.github.io/taiwan-island-drive/)
+
+---
+
 # 島嶼鐵道學校
 
 讓 3～5 歲孩子在手機上試著開火車。先按大綠色按鈕準備出發，再前進、煞車、停靠車站、開門接客。中文語音教練會提醒下一個動作，家長可以展開完整駕駛台，陪孩子認識列車慣性、牽引力、空氣煞車與號誌。
